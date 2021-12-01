@@ -47,8 +47,8 @@ def get_user():
     cursor = conn.cursor(pymysql.cursors.DictCursor)
     try:
         print(request)
-        # conn = mysql.connect()
-        # cursor = conn.cursor(pymysql.cursors.DictCursor)
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
         cursor.execute(
             "SELECT id, nome, cpf, email, telefone, senha FROM db_clientes.tbl_clientes")
         userRows = cursor.fetchall()
@@ -59,6 +59,36 @@ def get_user():
     except Exception as error:
         print(error)
     finally:
+        cursor.close()
+        conn.close()
+
+# Realiza o login do cliente - POST
+@app.route('/clientes/login', methods=['POST'])
+@basic_auth.required
+def login_user():
+    try:
+        _json = request.get_json(force=True)
+        _email = _json['email']
+        _senha = _json['senha']
+
+        if _email and _senha and request.method == 'POST':
+            conn = mysql.connect()
+            cursor = conn.cursor(pymysql.cursors.DictCursor)
+            cursor.execute(
+                "SELECT * FROM db_clientes.tbl_clientes WHERE email=%s and senha=%s", (_email, _senha))
+            userRow = cursor.fetchone()
+            if not userRow:
+                return Response('Login inválido', status=400)
+            response = jsonify('Login válido!')
+            response.status_code = 200
+            return response
+        else:
+            return not_found()
+    except Exception as error:
+        print(error)
+    finally:
+        conn = mysql.connect()
+        cursor = conn.cursor(pymysql.cursors.DictCursor)
         cursor.close()
         conn.close()
 
