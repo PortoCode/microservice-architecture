@@ -20,6 +20,8 @@ MYSQL_DATABASE_PASSWORD=
 MYSQL_DATABASE_DB_CLIENTES=db_clientes
 MYSQL_DATABASE_DB_PRODUTOS=db_produtos
 MYSQL_DATABASE_DB_VENDAS=db_vendas
+clientes_rota=localhost:5100
+cursos_rota=localhost:5300
 ```
 
 To run the application go into the app folder.
