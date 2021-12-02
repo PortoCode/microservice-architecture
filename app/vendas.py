@@ -1,7 +1,8 @@
 import pymysql
 from app import app
 from config import mysql, auth
-from flask import jsonify, Response, flash, request
+from flask import jsonify, Response, Flask, request
+from requests.auth import HTTPBasicAuth
 from flask_debug import Debug
 from mysql.connector import Error
 from flask_basicauth import BasicAuth
@@ -11,20 +12,15 @@ from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
 
-# clientes = os.environ['ENDPOINT_CLIENTES']    #'http://clientes_api:5100'
-# cursos = os.environ['ENDPOINT_PRODUTOS']      #'http://produtos_api:5300'
-
-# clientes = '127.0.0.1:5100'
-# cursos = '127.0.0.1:5300'
-
 clientes = os.environ['clientes_rota']
 cursos = os.environ['cursos_rota']
 
+auth_user = os.environ['BASIC_AUTH_USERNAME']
+auth_pass = os.environ['BASIC_AUTH_PASSWORD']
+
 basic_auth = auth
 
-
-# Adicionando um registro
-# Não é necessário passar o ID da compra, pois é AI, POST
+# Adicionando um registro de venda - POST
 @app.route('/vendas', methods=['POST'])
 @basic_auth.required
 def add_compra():
@@ -41,11 +37,10 @@ def add_compra():
             cursor = conn.cursor(pymysql.cursors.DictCursor)
 
             # Verificação se o Id do cliente confere com o db_clientes
-            cliente = requests.get(f'http://{clientes}/clientes/{_idCliente}', headers={
-                                   "Authorization": "Basic c2lsc2lsOjEyMzQ1Njc="})
-            curso = requests.get(f'http://{cursos}/produtos/{_idCurso}', headers={
-                                 "Authorization": "Basic c2lsc2lsOjEyMzQ1Njc="})
-            #status = requests.get(f'http://127.0.0.1:5200/cursos/status/{_idCurso}', headers = {"Authorization":"Basic c2lsc2lsOjEyMzQ1Njc="})
+            cliente = requests.get(
+                f'http://{clientes}/clientes/{_idCliente}', auth=HTTPBasicAuth(auth_user, auth_pass))
+            curso = requests.get(
+                f'http://{cursos}/produtos/{_idCurso}', auth=HTTPBasicAuth(auth_user, auth_pass))
 
             # Verificando se o cliente e o curso existem:
             if cliente.status_code == 404:
@@ -72,11 +67,9 @@ def add_compra():
         cursor.close()
         conn.close()
 
-
-# Criando as Rotas API para relação JOIN Cliente, Compra e Produtos/Cursos
-# Buscando todas as vendas cadastradas (GET)
+# Buscando todas as vendas cadastradas - GET
 @app.route('/vendas', methods=['GET'])
-# @basic_auth.required
+@basic_auth.required
 def compras():
     try:
         conn = mysql.connect()
@@ -93,10 +86,8 @@ def compras():
         cursor.close()
         conn.close()
 
-
-# Buscando todas as vendas cadastradas por id de clientes (GET)
-# http://127.0.0.1:5000/clientes/compras/id
-@app.route('/vendas/<int:idCliente>', methods=['GET'])
+# Busca todas as vendas cadastradas por id de cliente - GET
+@app.route('/vendas/clientes/<int:idCliente>', methods=['GET'])
 @basic_auth.required
 def id_compras(idCliente):
     try:
@@ -108,25 +99,17 @@ def id_compras(idCliente):
         if not userRow:
             return Response('Compra não cadastrada', status=404)
 
-        # Buscando os dados dos clientes e do curso que constam no inventário (userRow) - JOIN
-        #cliente = requests.get(f'http://127.0.0.1:5000/clientes/{idCliente}', headers = {"Authorization":"Basic c2lsc2lsOjEyMzQ1Njc="})
-        curso = []  # lista de json dos vários cursos comprados por um cliente
-        cliente = requests.get(f'http://{clientes}/clientes/{idCliente}', headers={
-                               "Authorization": "Basic c2lsc2lsOjEyMzQ1Njc="})
+        lista_cursos = []  # lista de json dos vários cursos comprados por um cliente
+        cliente = requests.get(
+            f'http://{clientes}/clientes/{idCliente}', auth=HTTPBasicAuth(auth_user, auth_pass))
         for i in (userRow):
-            #j = i['idCurso']
-            #c = requests.get(f'http://127.0.0.1:5200/cursos/{j}', headers = {"Authorization":"Basic c2lsc2lsOjEyMzQ1Njc="})
-            #c = requests.get('http://127.0.0.1:5200/cursos/{}'.format(i['idCurso']), headers = {"Authorization":"Basic c2lsc2lsOjEyMzQ1Njc="})
-            # c = requests.get(f'{cursos}/cursos/{i["idCurso"]}', headers = {"Authorization":"Basic c2lsc2lsOjEyMzQ1Njc="})
-            # i["data"] = f"{i['data']}"
-            # curso.append(c.json())
-            c = requests.get(f'http://{cursos}/produtos/{i["idCurso"]}', headers={
-                             "Authorization": "Basic c2lsc2lsOjEyMzQ1Njc="}, verify=False)
+            c = requests.get(f'http://{cursos}/produtos/{i["idCurso"]}', auth=HTTPBasicAuth(
+                auth_user, auth_pass))
             i["data"] = f"{i['data']}"
-            curso.append(c.json())
+            lista_cursos.append(c.json())
 
         # Imprimindo resultado
-        response = jsonify(userRow, cliente.json(), curso)
+        response = jsonify(userRow, cliente.json(), lista_cursos)
         response.status_code = 200
         return response
     except Exception as error:
@@ -135,8 +118,9 @@ def id_compras(idCliente):
         cursor.close()
         conn.close()
 
-# Alterando algum curso (PUT)
-# No put, precisa passar o ID na rota, mas no próprio body eu posso manter o mesmo, ou colocar o número novo a ser alterado.
+# Alterando algum curso - PUT
+# É necessário passar o ID na rota, que é o id do curso. No body é possível manter o mesmo,
+# ou colocar um número novo, caso queira alterar id do curso.
 @app.route('/vendas/<int:id>', methods=['PUT'])
 @basic_auth.required
 def update_curso(id):
@@ -180,8 +164,7 @@ def update_curso(id):
         cursor.close()
         conn.close()
 
-
-# Deletando algum curso (DELETE)
+# Deletando algum curso - DELETE
 @app.route('/vendas/<int:idCompra>', methods=['DELETE'])
 @basic_auth.required
 def delete_curso(idCompra):
