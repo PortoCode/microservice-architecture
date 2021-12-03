@@ -7,7 +7,7 @@ from flask_basicauth import BasicAuth
 
 basic_auth = auth
 
-# API - Clientes
+# ----------> CLIENTES <----------
 
 # Adicionando um registro de cliente - POST
 @app.route('/clientes', methods=['POST'])
@@ -169,7 +169,8 @@ def delete_user(id):
         cursor.close()
         conn.close()
 
-# API - Endereços
+
+# ----------> ENDEREÇOS <----------
 
 # Adicionando um registro de endereço - POST
 @app.route('/enderecos', methods=['POST'])
