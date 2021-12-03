@@ -13,15 +13,15 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 clientes = os.environ['clientes_rota']
-cursos = os.environ['cursos_rota']
+servicos = os.environ['servicos_rota']
 
 auth_user = os.environ['BASIC_AUTH_USERNAME']
 auth_pass = os.environ['BASIC_AUTH_PASSWORD']
 
 basic_auth = auth
 
-# Adicionando um registro de venda - POST
-@app.route('/vendas', methods=['POST'])
+# Adicionando um registro de pedido - POST
+@app.route('/pedidos', methods=['POST'])
 @basic_auth.required
 def add_compra():
     try:
@@ -67,8 +67,8 @@ def add_compra():
         cursor.close()
         conn.close()
 
-# Buscando todas as vendas cadastradas - GET
-@app.route('/vendas', methods=['GET'])
+# Buscando todos os pedidos cadastrados - GET
+@app.route('/pedidos', methods=['GET'])
 @basic_auth.required
 def compras():
     try:
@@ -86,8 +86,8 @@ def compras():
         cursor.close()
         conn.close()
 
-# Busca todas as vendas cadastradas por id de cliente - GET
-@app.route('/vendas/clientes/<int:idCliente>', methods=['GET'])
+# Busca todos os pedidos cadastrados por id de cliente - GET
+@app.route('/pedidos/clientes/<int:idCliente>', methods=['GET'])
 @basic_auth.required
 def id_compras(idCliente):
     try:
@@ -118,12 +118,10 @@ def id_compras(idCliente):
         cursor.close()
         conn.close()
 
-# Alterando algum curso - PUT
-# É necessário passar o ID na rota, que é o id do curso. No body é possível manter o mesmo,
-# ou colocar um número novo, caso queira alterar id do curso.
-@app.route('/vendas/<int:id>', methods=['PUT'])
+# Alterando algum pedido - PUT
+@app.route('/pedidos', methods=['PUT'])
 @basic_auth.required
-def update_curso(id):
+def update_curso():
     try:
         conn = mysql.connect()
         cursor = conn.cursor()
@@ -135,12 +133,12 @@ def update_curso(id):
 
         if _data and _idCliente and _idCurso and _idCompra and request.method == 'PUT':
             sqlQuery = "SELECT * FROM db_vendas.tbl_cliente_compra_cursos WHERE idCompra=%s"
-            cursor.execute(sqlQuery, id)
+            cursor.execute(sqlQuery, _idCompra)
             select = cursor.fetchone()
             if not select:
                 return Response('Compra não cadastrada', status=400)
             sqlQuery = "UPDATE tbl_cliente_compra_cursos SET data=%s, idCliente=%s, idCurso=%s, idCompra=%s WHERE idCompra=%s"
-            bindData = (_data, _idCliente, _idCurso, _idCompra, id)
+            bindData = (_data, _idCliente, _idCurso, _idCompra, _idCompra)
             # Verificação se o Id do cliente confere com o db_clientes
             cliente = requests.get(f'http://{clientes}/clientes/{_idCliente}', headers={
                                    "Authorization": "Basic c2lsc2lsOjEyMzQ1Njc="})
@@ -164,8 +162,8 @@ def update_curso(id):
         cursor.close()
         conn.close()
 
-# Deletando algum curso - DELETE
-@app.route('/vendas/<int:idCompra>', methods=['DELETE'])
+# Deletando algum pedido - DELETE
+@app.route('/pedidos/<int:idCompra>', methods=['DELETE'])
 @basic_auth.required
 def delete_curso(idCompra):
     try:
@@ -201,4 +199,4 @@ def not_found(error=None):
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=5400)
+    app.run(debug=True, host="0.0.0.0", port=5300)
