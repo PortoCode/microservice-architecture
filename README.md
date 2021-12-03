@@ -18,10 +18,10 @@ MYSQL_DATABASE_HOST=localhost
 MYSQL_DATABASE_USER=
 MYSQL_DATABASE_PASSWORD=
 MYSQL_DATABASE_DB_CLIENTES=db_clientes
-MYSQL_DATABASE_DB_PRODUTOS=db_produtos
-MYSQL_DATABASE_DB_VENDAS=db_vendas
+MYSQL_DATABASE_DB_SERVICOS=db_servicos
+MYSQL_DATABASE_DB_PEDIDOS=db_pedidos
 clientes_rota=localhost:5100
-cursos_rota=localhost:5300
+servicos_rota=localhost:5200
 ```
 
 To run the application go into the app folder.
@@ -34,14 +34,12 @@ Start each service on a different terminal.
 
 ```bash
 py clientes.py
-py enderecos.py
-py produtos.py
-py vendas.py
+py servicos.py
+py pedidos.py
 ```
 
 Access the data via Browser or Postman - remembering that the database needs to be installed and the data needs to have been created on the local machine.
 
 - http://localhost:5100/clientes
-- http://localhost:5200/enderecos
-- http://localhost:5300/produtos
-- http://localhost:5400/vendas
+- http://localhost:5200/servicos
+- http://localhost:5300/pedidos
