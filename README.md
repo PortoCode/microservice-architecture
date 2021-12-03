@@ -1,6 +1,6 @@
 # Microservice Architecture
 
-Application of a tourism agency with microservices architecture
+Application of a tourism agency with microservices architecture.
 
 # Technologies Deployed
 
